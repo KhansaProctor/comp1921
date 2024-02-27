@@ -62,6 +62,24 @@ else
     echo "FAIL"
 fi
 
+echo -n "Testing bad maze generation (unequal rows)"
+timout 0.2s ./maze bad_generation_unequal_rows.csv > out
+if grep -q "Error: Maze does not have the expected format" out;
+then   
+    echo "PASS"
+else    
+    echo "FAIL"
+fi
+
+echo -n "Testing bad maze generation (unequal columns)"
+timout 0.2s ./maze bad_generation_unequal_columns.csv > out
+if grep -q "Error: Maze does not have the expected format" out;
+then   
+    echo "PASS"
+else    
+    echo "FAIL"
+fi
+
 echo -n "Testing successfull generation, width and height in range"
 timeout 0.2s ./maze successfull_generation.csv > out
 if grep -q "Maze successfully generated" out;
@@ -125,23 +143,27 @@ fi
 # testing down movement by using grep to see if there's 2 rows of the maze where the player is below the start
 echo -n "Testing movement down"
 timeout 0.2s ./maze successfull_down_move.csv > out
-if grep -A1 "#  X   #" | grep -B1 "#  S   #" out;
+if grep -A1 "#  S   #" | grep -B1 "#  X   #" out;
 then
     echo "PASS"
 else
     echo "FAIL"
 fi
 
+# tested by opening the map immediately after the game starts
+# End will be on the same row as the start to enable a unique row to be found
+# the row with the player in the start location should be able to be found
 echo -n "Testing map opening"
 timout 0.2s ./maze successfull_map_opening.csv > out
-if grep -q "Map open" out;
+if grep -q "#  E#X   #" out;
 then
     echo "PASS"
 else
     echo "FAIL"
 fi
 
-echo -n "Testing no movement or map opening"
+
+echo -n "Testing no movement or no map opening"
 timeout 0.2s ./maze unsuccessfull_user_input.csv > out
 if grep -q "Error: input not asigned to a movement or action" out;
 then 
@@ -153,27 +175,28 @@ fi
 
 echo -e "\n~~ Movement in the maze ~~"
 
-echo -n "Testing movement in spaces"
-timeout 0.2s ./maze successfull_move_in_space.csv > out
-if grep -q "Successfull move in a space" out;
-then
-    echo "PASS"
-else
-    echo "FAIL"
-fi
-
+#done by have the start point two places left of a wall
+#player is moved right twice
+#map is then checked
+#player should have only moved one space to the right
+#done on the same row as the start point to ensure a unique row
 echo -n "Testing movement into a wall"
 timeout 0.2s ./maze move_into_wall.csv > out
-if grep -q "Movement through a wall is not allowed" out;
+if grep -q "Movement through a wall is not allowed"| grep -q "#SX#   #" out;
 then
     echo "PASS"
 else
     echo "FAIL"
 fi
 
+#done by have the start point two places left of an edge
+#player is moved right twice
+#map is then checked
+#player should have only moved one space to the right
+#done on the same row as the start point to ensure a unique row
 echo -n "Testing movement off the edge"
 timeout 0.2s ./maze move_off_the_edge.csv > out
-if grep -q "Movement off the edge of the map is not allowed" out;
+if grep -q "Movement off the edge of the map is not allowed"|grep -q "#     X " out;
 then
     echo "PASS"
 else
@@ -182,6 +205,7 @@ fi
 
 echo -e "\n~~ Start and End of the maze ~~"
 
+#done using a maze missing an S
 echo -n "Testing bad start point generation"
 timeout 0.2s ./maze bad_start_point.csv > out
 if grep -q "Error: bad start point generation" out;
@@ -191,6 +215,7 @@ else
     echo "FAIL"
 fi
 
+#done using a maze missing an E
 echo -n "Testing bad end point generation"
 timeout 0.2s ./maze bad_end_point.csv > out
 if grep -q "Error: bad end point generation" out;
@@ -200,6 +225,8 @@ else
     echo "FAIL"
 fi
 
+#done by moving the player to the end point
+#then checking if the program is still running
 echo -n "Testing unsuccesfull end game closure"
 if pgrep -x ./maze unsuccessfull_end_game.csv >/dev/null
 then
@@ -208,6 +235,8 @@ else
     echo "FAIL"
 fi
 
+#done by moving the player to the end point
+#then checking for the completion message
 echo -n "Testing succesfull end game message"
 timeout 0.2s ./maze successfull_end_game.csv > out
 if grep -q "Game Over, you have won" out;
